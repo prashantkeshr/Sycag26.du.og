@@ -1,0 +1,369 @@
+================================================================================
+  DHURTA SYNC — COMPLETE PLATFORM OVERVIEW
+  Version: v13  |  Updated: 2026-10-26
+  Live: https://sync.dhurta.org
+  Repo: https://github.com/prashantkeshr/Sycag26.du.og
+================================================================================
+
+
+────────────────────────────────────────────────────────────────────────────────
+  WHAT IS DHURTA SYNC?
+────────────────────────────────────────────────────────────────────────────────
+
+Dhurta Sync is a zero-backend, serverless peer-to-peer (P2P) web application
+for transferring files, chatting, and making voice/video calls between any two
+or more devices — without accounts, sign-ups, servers, or cloud storage.
+
+Think of it as AirDrop for every device: it works on Android, iOS, Windows,
+Mac, Linux, Chromebook — in any modern browser, on any network.
+
+No file is ever uploaded to a server. Data travels directly from one device to
+another over encrypted WebRTC DataChannels.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  CORE PHILOSOPHY
+────────────────────────────────────────────────────────────────────────────────
+
+  • Zero server dependency    — MQTT brokers are used only for signaling (SDP
+                                exchange), not for file data. Files never leave
+                                your devices.
+  • Zero accounts             — No sign-up, no login, no email required.
+  • Zero file size limits     — Stream files of any size (OPFS + SW proxy for
+                                100 MB+).
+  • Zero installation         — Runs in any browser. Can also be installed as a
+                                PWA (Progressive Web App) for offline use.
+  • End-to-end private        — AES-GCM 256-bit encryption on all chat messages;
+                                WebRTC DTLS on all DataChannel file transfers.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  TECH STACK
+────────────────────────────────────────────────────────────────────────────────
+
+  Frontend    Vanilla ES6+, HTML5, CSS3 (zero build tools, zero npm)
+  Transport   WebRTC DataChannel (SCTP over DTLS)
+  Signaling   MQTT over WebSocket — triple-broker failover:
+                1. broker.emqx.io:8084
+                2. broker.hivemq.com:8884
+                3. test.mosquitto.org:8081
+  Encryption  AES-GCM 256-bit (chat) | PBKDF2-SHA256 100k iter key derivation
+              WebRTC DTLS 1.3 (file channel)
+  Offline     Service Worker v13 (network-first nav, SWR vendor, stream proxy)
+  Storage     IndexedDB (chat history) | OPFS (large-file streaming >50 MB)
+  Deployment  GitHub Pages (static, no build step) + CNAME sync.dhurta.org
+  ICE/TURN    openrelay.metered.ca (ports 80, 443, 443/TCP)
+
+
+────────────────────────────────────────────────────────────────────────────────
+  FEATURE LIST — DETAILED
+────────────────────────────────────────────────────────────────────────────────
+
+1. FILE TRANSFER
+   ─────────────
+   • P2P file transfer via WebRTC DataChannel (SCTP, ordered, reliable)
+   • No file size limit — tested on multi-GB files
+   • 64 KB chunks with 256 KB backpressure threshold (no RAM overflow)
+   • OPFS streaming for files >50 MB (writes directly to device storage,
+     bypasses RAM)
+   • Service Worker ReadableStream proxy for files >100 MB (zero-RAM download)
+   • CRC32 integrity check — mismatch triggers a warning toast
+   • Live progress bar per file (percentage + MB/s speed display)
+   • Multiple concurrent transfers (queue-based)
+   • Pause/resume support
+   • Drag-and-drop + file picker
+   • Transfer history saved in IndexedDB (persists across sessions)
+
+2. BEAM MODE
+   ──────────
+   • ShareMe / Xender-style rapid file drop
+   • One tap to share — no manual peer selection
+   • Optimised for single-file, fast drops on local networks
+
+3. PAIRING / ROOM SYSTEM
+   ──────────────────────
+   • 4-digit PIN room — auto-generated on launch; same PIN = same room
+   • QR code — tap to show QR; any phone camera / Google Lens scans it
+     and opens the site with the PIN pre-filled (no app required on receiver)
+   • QR encodes full URL: https://sync.dhurta.org/?pin=XXXX
+   • QR generated server-side via api.qrserver.com (no JS library needed)
+   • Offline QR fallback — canvas shows PIN prominently + "Enter PIN manually"
+   • PIN persists in localStorage across browser restarts
+
+4. ENCRYPTED CHAT
+   ───────────────
+   • AES-GCM 256-bit end-to-end encryption
+   • Key derived from room PIN via PBKDF2 (SHA-256, 100,000 iterations)
+   • Group chat — all peers in the same room receive messages
+   • Typing indicators (live)
+   • Message deduplication (prevents duplicates over mesh)
+   • Chat history stored in IndexedDB (offline access)
+   • Emoji reactions, file attachments in chat
+   • Per-peer message threading
+
+5. VOICE & VIDEO CALLS
+   ────────────────────
+   • WebRTC MediaStream voice and video calls
+   • Screen sharing (getDisplayMedia)
+   • Mute / camera off toggle during call
+   • Minimisable call overlay (picture-in-picture style)
+   • Call duration timer
+   • Ring tone via Web Audio API
+   • Call state machine: idle → ringing → active → ended
+   • Background blur / theme while in call
+
+6. NEARBY DEVICE DISCOVERY
+   ────────────────────────
+   • Same-Network section — shows other Dhurta Sync users on the same
+     WiFi/hotspot (subnet match via WebRTC ICE candidate extraction +
+     ipify.org fallback)
+   • Other Dhurta Rooms — shows users on the same MQTT broker in different
+     rooms (global presence via dhurta_mesh_v12/global topic)
+   • Bluetooth (BLE) scan — uses Web Bluetooth API to discover nearby BLE
+     devices; hides scan button automatically on unsupported browsers
+   • Invite button — sends room link via Web Share API or clipboard copy
+   • NFC pairing button — hidden automatically on unsupported browsers
+
+7. RADAR / PRESENCE UI
+   ─────────────────────
+   • Animated radar sweep showing live peers in the room
+   • Peer avatars with name, emoji, color identity
+   • Connection state indicator per peer (connecting / connected / lost)
+   • Peer roster with online count
+   • Ambient light effect that follows cursor
+
+8. PEER IDENTITY SYSTEM
+   ──────────────────────
+   • Random persistent 12-hex-char device ID (stored in localStorage)
+   • User-editable display name + emoji + color
+   • Identity persists across sessions on the same browser
+   • Different browsers/devices get different identities automatically
+
+9. PWA / OFFLINE SUPPORT
+   ───────────────────────
+   • Full Progressive Web App (installable on Android, iOS, Windows, Mac)
+   • Service Worker v13:
+       - Network-first navigation (never serves stale index.html)
+       - Stale-while-revalidate for CDN vendor assets (MQTT, jsQR libs)
+       - Cache-first for static assets
+       - Auto-update: polls version.json every 60 seconds; triggers SW
+         skip-waiting + auto-reload when new version detected
+       - controllerchange → toast + reload for seamless updates
+   • Works after first load on local networks (WebRTC LAN path)
+   • App shell loads offline; file transfer requires at least one working
+     MQTT broker for initial signaling
+
+10. SECURITY
+    ─────────
+    • AES-GCM 256-bit encryption for all chat messages
+    • PBKDF2 key derivation (SHA-256, 100k iterations) from room PIN
+    • WebRTC DTLS 1.3 on DataChannel (file transfer encrypted in transit)
+    • No server ever sees file data
+    • STUN/TURN only used for NAT traversal (connection setup), not data relay
+    • Perfect Negotiation (RFC 8829) — prevents signaling race conditions
+    • ICE candidate queuing — prevents "candidate before remote description" errors
+
+11. QR CODE SCANNER
+    ───────────────
+    • Built-in QR scanner using device camera (jsQR library)
+    • Decodes QR → extracts PIN → auto-joins room
+    • Camera permission handled gracefully with fallback message
+
+12. NOTIFICATIONS
+    ─────────────
+    • Web Push notifications (background tab / PWA)
+    • ntfy.sh push relay for cross-device notifications
+    • In-app toast system for all events (transfer complete, new peer, etc.)
+
+13. BATTERY / PERFORMANCE MODE
+    ───────────────────────────
+    • Battery mode toggle — reduces animation and polling frequency
+    • Heartbeat interval: 1800 ms (normal) / reduced in battery mode
+    • Peer TTL: 7000 ms before a peer is considered offline
+
+
+────────────────────────────────────────────────────────────────────────────────
+  MODES / VIEWS
+────────────────────────────────────────────────────────────────────────────────
+
+  Transfer Mode   Main mode — radar, peer list, file drag-and-drop
+  Beam Mode       Rapid single-file drop (ShareMe style)
+  Chat View       Full group chat with encryption
+  Calls View      Voice + video call interface
+  Files View      Transfer history and download management
+  Nearby Modal    Device discovery (same network, global, BLE)
+  QR Modal        Show QR to share / scan QR to join
+  Settings Panel  Name, emoji, color, PIN, battery mode
+
+
+────────────────────────────────────────────────────────────────────────────────
+  DEVICE & BROWSER COMPATIBILITY
+────────────────────────────────────────────────────────────────────────────────
+
+  Chrome / Edge    80+     Full support
+  Firefox          78+     Full support
+  Safari           15+     Full support (iOS included)
+  Samsung Internet 12+     Full support
+  Opera            67+     Full support
+
+  Platforms: Android, iOS, Windows, macOS, Linux, ChromeOS
+
+  WebRTC, WebSocket, Web Crypto API, Service Worker, IndexedDB required.
+  Web Bluetooth (BLE scan) requires Chrome on Android/desktop; optional.
+  NFC requires Chrome on Android; hidden automatically if unsupported.
+  OPFS requires Chrome 102+ / Firefox 111+; falls back to blob array.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  SIGNALING ARCHITECTURE
+────────────────────────────────────────────────────────────────────────────────
+
+  Devices connect via a 3-broker MQTT mesh (automatic failover):
+
+    Device A  ──MQTT publish──▶  EMQX / HiveMQ / Mosquitto  ◀──MQTT subscribe──  Device B
+                                         (SDP / ICE only)
+                                              │
+                              WebRTC DataChannel established
+                                              │
+    Device A  ◀═══════ Encrypted file / chat data (P2P) ═══════▶  Device B
+
+  MQTT topics:
+    dhurta_mesh_v12/room_{PIN}    — room-scoped messages (offer/answer/ICE/chat)
+    dhurta_mesh_v12/global        — cross-room presence (nearby discovery)
+
+  Perfect Negotiation (RFC 8829):
+    - onnegotiationneeded drives all offer creation automatically
+    - Polite peer (lower myId) rolls back on glare; impolite peer ignores
+    - ICE candidates queued until setRemoteDescription completes
+
+
+────────────────────────────────────────────────────────────────────────────────
+  LARGE FILE HANDLING PIPELINE
+────────────────────────────────────────────────────────────────────────────────
+
+  File size < 50 MB     →  Standard blob array in RAM → download on complete
+  File size 50–100 MB   →  OPFS (Origin Private File System):
+                            getDirectory() → getFileHandle() → createWritable()
+                            Chunks streamed directly to disk, zero RAM spike
+                            Early chunks buffered in _opfsQueue until writable ready
+  File size > 100 MB    →  Service Worker ReadableStream proxy:
+                            SW intercepts /stream-download/ fetch
+                            Chunks posted via postMessage → enqueued into ReadableStream
+                            Browser downloads as a true streaming HTTP response
+  CRC32 verification    →  Rolling CRC32 computed on sender and receiver
+                            Mismatch on FILE_DONE → warning toast shown
+
+
+────────────────────────────────────────────────────────────────────────────────
+  DEPLOYMENT
+────────────────────────────────────────────────────────────────────────────────
+
+  Host:        GitHub Pages (static, zero build step)
+  Domain:      sync.dhurta.org (via CNAME record)
+  Repo:        prashantkeshr/Sycag26.du.og (main branch)
+  Cache bust:  app.js?v=13 query suffix + version.json version check
+  SW version:  dhurta-v13 cache name triggers old cache purge on activate
+  Auto-deploy: Push to main → GitHub Actions → Pages updated in ~60 seconds
+
+
+────────────────────────────────────────────────────────────────────────────────
+  FILES IN REPO
+────────────────────────────────────────────────────────────────────────────────
+
+  index.html       Main HTML shell — SEO, PWA meta, JSON-LD structured data
+  app.js           Core application (~2300+ lines) — P2P engine + full UI
+  style.css        OLED dark theme, Electric Amber accent (#F59E0B)
+  sw.js            Service Worker v13 — caching + stream proxy + push
+  manifest.json    PWA manifest
+  version.json     {"v": 13, "build": "2026-10-26"} — used by SW auto-update
+  CNAME            sync.dhurta.org
+  sync.png         App icon (PWA + favicon)
+  sync.svg         Vector icon
+  og-image.svg     Open Graph / Twitter card image (1200×630)
+  sitemap.xml      XML sitemap for search engines
+  robots.txt       Crawl directives
+  llms.txt         AI/LLM discoverability declaration
+  README.md        Project documentation + badge links
+
+
+────────────────────────────────────────────────────────────────────────────────
+  COMPETITOR COMPARISON
+────────────────────────────────────────────────────────────────────────────────
+
+  Feature                   Dhurta Sync   AirDrop   ShareIt   WeTransfer  Snapdrop
+  ─────────────────────────────────────────────────────────────────────────────
+  Works cross-platform          YES          NO        YES        YES        YES
+  No account required           YES          YES       NO         NO         YES
+  No file size limit            YES          YES       NO         NO         YES
+  No internet (LAN only)        YES*         YES       NO         NO         YES
+  End-to-end encrypted          YES          YES       NO         NO         NO
+  Voice + video calls           YES          NO        YES        NO         NO
+  Group chat                    YES          NO        YES        NO         NO
+  PWA / installable             YES          N/A       NO         NO         NO
+  QR code pairing               YES          NO        YES        NO         NO
+  Open source                   YES          NO        NO         NO         YES
+  No server for file data       YES          YES       NO         NO         YES
+  ─────────────────────────────────────────────────────────────────────────────
+  *LAN transfers work once initial signaling is done; signaling needs internet
+
+
+────────────────────────────────────────────────────────────────────────────────
+  LIMITATIONS / KNOWN CONSTRAINTS
+────────────────────────────────────────────────────────────────────────────────
+
+  • MQTT signaling brokers are public test brokers — not guaranteed uptime.
+    All three must be down simultaneously for connection to fail.
+  • STUN/TURN (openrelay.metered.ca) required when both devices are behind
+    symmetric NAT (e.g., two different mobile data networks).
+  • Web Bluetooth BLE scan requires user gesture + Chrome on Android/desktop;
+    not available on iOS Safari (hidden automatically).
+  • NFC pairing requires Chrome on Android; hidden on unsupported browsers.
+  • OPFS streaming requires Chrome 102+ or Firefox 111+; older browsers fall
+    back to blob array (may cause RAM issues on very large files).
+  • Push notifications via ntfy.sh require internet (signaling-only channel).
+  • Chat encryption key = room PIN — anyone with the PIN can read the chat.
+    For strong privacy, use a long/random PIN.
+
+
+────────────────────────────────────────────────────────────────────────────────
+  CHANGELOG SUMMARY
+────────────────────────────────────────────────────────────────────────────────
+
+  v13 (2026-10-26)
+    - Domain migrated from sync.dhurta.com → sync.dhurta.org (all files)
+    - Perfect Negotiation (RFC 8829) — replaces old offer/answer logic
+    - ICE candidate queuing — fixes race condition on fast peers
+    - OPFS streaming for files >50 MB (zero RAM)
+    - CRC32 integrity verification on all transfers
+    - QR code via api.qrserver.com (dropped broken qrcode@1.5.3 CDN lib)
+    - Nearby Device Discovery modal (same WiFi, other rooms, BLE)
+    - Inline SVG icons (nav + FAB) — replaced all emoji icons
+    - NFC + BLE buttons auto-hidden on unsupported browsers
+    - _ensureDC double-callback fix (toast + roster now fire correctly)
+    - OLED palette refresh (--bg: #090A0F, Electric Amber accent #F59E0B)
+    - SW v13 cache purge of dhurta-v12 on activate
+    - 60s periodic version.json check + controllerchange auto-reload
+
+  v12 (2026-10-24)
+    - MQTT triple-broker failover
+    - AES-GCM 256-bit chat encryption
+    - Service Worker v12 stream proxy for >100 MB files
+    - Battery mode toggle
+    - Radar animated peer discovery UI
+
+  v11 and earlier
+    - Initial P2P file transfer, basic chat, voice/video calls
+
+
+────────────────────────────────────────────────────────────────────────────────
+  CONTACT / LINKS
+────────────────────────────────────────────────────────────────────────────────
+
+  Live app       https://sync.dhurta.org
+  GitHub         https://github.com/prashantkeshr/Sycag26.du.og
+  Organization   https://dhurta.com
+  Twitter/X      @dhurta
+
+================================================================================
+  END OF DOCUMENT
+================================================================================
