@@ -3,11 +3,11 @@
    Network-first navigation · SWR vendor assets · Stream proxy
    ============================================================ */
 
-const CACHE        = 'dhurta-v13';
+const CACHE        = 'dhurta-v14';
 const VENDOR_CACHE = 'dhurta-vendor-v1';
 
 const CORE_ASSETS = [
-  './', './index.html', './style.css', './app.js?v=13',
+  './', './index.html', './style.css', './app.js?v=14',
   './manifest.json', './sync.png', './sync.svg',
   './og-image.svg', './robots.txt', './llms.txt', './version.json',
 ];
