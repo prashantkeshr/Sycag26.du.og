@@ -918,9 +918,6 @@ body { display:flex; flex-direction:column; }
 .modal-back.open {
   opacity:1; pointer-events:all;
 }
-.modal-back:not(.hidden) {
-  opacity:1; pointer-events:all;
-}
 .modal-sheet {
   width:100%; max-width:480px; max-height:88vh;
   background:var(--bg-2); border:1px solid var(--border);
@@ -930,8 +927,7 @@ body { display:flex; flex-direction:column; }
   transform:translateY(20px);
   transition:transform .2s ease;
 }
-.modal-back.open .modal-sheet,
-.modal-back:not(.hidden) .modal-sheet {
+.modal-back.open .modal-sheet {
   transform:translateY(0);
 }
 /* Pull bar */

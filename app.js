@@ -9,6 +9,7 @@ const app = (() => {
 
   /* ─────────────── CONSTANTS ─────────────── */
   const VERSION     = 'v14';
+  const MESH_VER    = 'v12';   // mesh protocol version — stable across app versions so all clients can connect
   const CHUNK_SIZE  = 64 * 1024;    // 64 KB — safe MTU across all mobile browsers
   const BUFFER_HIGH = 256 * 1024;   // 256 KB backpressure threshold
   const HB_MS       = 1800;
@@ -342,8 +343,8 @@ const app = (() => {
     const p = String(Math.floor(1000 + Math.random() * 9000));
     localStorage.setItem('dhurta_pin', p); return p;
   }
-  function roomTopic()   { return `dhurta_mesh_${VERSION}/room_${currentPin}`; }
-  function globalTopic() { return `dhurta_mesh_${VERSION}/global`; }
+  function roomTopic()   { return `dhurta_mesh_${MESH_VER}/room_${currentPin}`; }
+  function globalTopic() { return `dhurta_mesh_${MESH_VER}/global`; }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
   function formatBytes(b) {
     if (b < 1024) return b + ' B';
@@ -1068,7 +1069,7 @@ const app = (() => {
       const m = Math.floor(_callSeconds/60), s = _callSeconds%60;
       const txt = m+':'+(s<10?'0':'')+s;
       const el = document.getElementById('call-overlay-timer');
-      if (el) el.textContent = txt;
+      if (el) { el.textContent = txt; el.style.display = 'block'; }
       const mb = document.getElementById('call-mini-time');
       if (mb) mb.textContent = txt;
     }, 1000);
